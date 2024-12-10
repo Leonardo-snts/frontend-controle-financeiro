@@ -38,7 +38,7 @@ const AddPessoa: React.FC = () => {
         className="w-full mb-4 p-2 border rounded focus:outline-none focus:ring focus:ring-indigo-300"
       />
       <input
-        type="email"
+        type="email"  
         placeholder="Email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}

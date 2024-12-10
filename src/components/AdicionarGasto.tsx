@@ -9,7 +9,7 @@ const AdicionarGasto: React.FC = () => {
   const [pessoas, setPessoas] = useState([]);
 
   useEffect(() => {
-    axios.get('/api/pessoas/')
+    axios.get('http://localhost:8000/api/pessoas/')
       .then(response => setPessoas(response.data))
       .catch(error => console.error('Erro ao buscar pessoas:', error));
   }, []);
@@ -17,7 +17,7 @@ const AdicionarGasto: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post('/api/gastos/', { descricao, valor, data, pessoa });
+      await axios.post('http://localhost:8000/api/gastos/', { descricao, valor, data, pessoa });
       setDescricao('');
       setValor('');
       setData('');

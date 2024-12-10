@@ -14,7 +14,6 @@ const App: React.FC = () => {
       <UploadPDF />
       <AddPessoa />
       <AdicionarGasto />
-      <AdicionarPessoa />
       <GastoList />
       <PessoaList />
     </div>
