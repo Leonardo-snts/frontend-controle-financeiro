@@ -4,6 +4,7 @@ import axios from 'axios';
 const AdicionarGasto: React.FC = () => {
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
+  const [parcela, setParcela] = useState('');
   const [data, setData] = useState('');
   const [pessoa, setPessoa] = useState('');
   const [pessoas, setPessoas] = useState([]);
@@ -17,9 +18,10 @@ const AdicionarGasto: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:8000/api/gastos/', { descricao, valor, data, pessoa });
+      await axios.post('http://localhost:8000/api/gastos/', { descricao, valor, parcela, data, pessoa });
       setDescricao('');
       setValor('');
+      setParcela('');
       setData('');
       setPessoa('');
       alert('Gasto adicionado com sucesso!');
@@ -48,6 +50,13 @@ const AdicionarGasto: React.FC = () => {
           placeholder="Valor"
           className="block w-full p-2 border rounded"
           required
+        />
+        <input
+          type="text"
+          value={parcela}
+          onChange={(e) => setParcela(e.target.value)}
+          placeholder="Parcela"
+          className="block w-full p-2 border rounded"
         />
         <input
           type="date"

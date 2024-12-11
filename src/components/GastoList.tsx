@@ -18,6 +18,7 @@ const GastoList: React.FC = () => {
           <li key={gasto.id} className="p-4 border rounded shadow">
             <h3 className="font-semibold">{gasto.descricao}</h3>
             <p className="text-sm text-gray-600">Valor: R$ {gasto.valor}</p>
+            <p className="text-sm text-gray-600">Parcela: {gasto.parcela || 'N/A'}</p>
             <p className="text-sm text-gray-600">Data: {gasto.data}</p>
             <p className="text-sm text-gray-600">Pessoa: {gasto.pessoa || 'N/A'}</p>
           </li>
