@@ -3,9 +3,9 @@ import React from "react";
 import UploadPDF from "./components/UploadPDF";
 import AddPessoa from "./components/AddPessoa";
 import AdicionarGasto from "./components/AdicionarGasto";
-import AdicionarPessoa from "./components/AdicionarPessoa";
 import GastoList from "./components/GastoList";
 import PessoaList from "./components/PessoaList";
+import TotalGastosPessoa from "./components/TotalGastoPessoa";
 
 const App: React.FC = () => {
   return (
@@ -14,6 +14,7 @@ const App: React.FC = () => {
       <UploadPDF />
       <AddPessoa />
       <AdicionarGasto />
+      <TotalGastosPessoa />
       <GastoList />
       <PessoaList />
     </div>
