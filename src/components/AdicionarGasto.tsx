@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { fetchPessoas, addGasto } from '../services/api';
 
 const AdicionarGasto: React.FC = () => {
   const [descricao, setDescricao] = useState('');
@@ -10,15 +10,21 @@ const AdicionarGasto: React.FC = () => {
   const [pessoas, setPessoas] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:8000/api/pessoas/')
-      .then(response => setPessoas(response.data))
-      .catch(error => console.error('Erro ao buscar pessoas:', error));
+    const fetchData = async () => {
+      try {
+        const data = await fetchPessoas();
+        setPessoas(data);
+      } catch (error) {
+        console.error('Erro ao buscar pessoas:', error);
+      }
+    };
+    fetchData();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:8000/api/gastos/', { descricao, valor, parcela, data, pessoa });
+      await addGasto({ descricao, valor, parcela, data, pessoa });
       setDescricao('');
       setValor('');
       setParcela('');

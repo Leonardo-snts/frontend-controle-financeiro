@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { fetchGastos, fetchPessoas, updateGasto, deleteGasto } from "../services/api";
 
 const GastoList: React.FC = () => {
   const [gastos, setGastos] = useState([]);
@@ -12,27 +12,19 @@ const GastoList: React.FC = () => {
   const [updatedPessoa, setUpdatedPessoa] = useState("");
 
   useEffect(() => {
-    fetchGastos();
-    fetchPessoas();
+    const fetchData = async () => {
+      try {
+        const gastosData = await fetchGastos();
+        const pessoasData = await fetchPessoas();
+        setGastos(gastosData);
+        setPessoas(pessoasData);
+      } catch (error) {
+        console.error("Erro ao buscar dados:", error);
+      }
+    };
+
+    fetchData();
   }, []);
-
-  const fetchGastos = async () => {
-    try {
-      const response = await axios.get("http://localhost:8000/api/gastos/");
-      setGastos(response.data);
-    } catch (error) {
-      console.error("Erro ao buscar gastos:", error);
-    }
-  };
-
-  const fetchPessoas = async () => {
-    try {
-      const response = await axios.get("http://localhost:8000/api/pessoas/");
-      setPessoas(response.data);
-    } catch (error) {
-      console.error("Erro ao buscar pessoas:", error);
-    }
-  };
 
   const handleEdit = (gasto: any) => {
     setEditingGasto(gasto);
@@ -47,15 +39,16 @@ const GastoList: React.FC = () => {
     if (!editingGasto) return;
 
     try {
-      await axios.put(`http://localhost:8000/api/gastos/${editingGasto.id}/`, {
+      await updateGasto(editingGasto.id, {
         descricao: updatedDescricao,
         valor: updatedValor,
         parcela: updateParcela,
         data: updatedData,
-        pessoa: updatedPessoa,
-      });
+        pessoa: updatedPessoa
+      })
       setEditingGasto(null);
-      fetchGastos();
+      const updateGastos = await fetchGastos();
+      setGastos(updateGastos);
     } catch (error) {
       console.error("Erro ao atualizar gasto:", error);
     }
@@ -63,7 +56,7 @@ const GastoList: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`http://localhost:8000/api/gastos/${id}/`);
+      await deleteGasto(id);
       setGastos(gastos.filter((gasto: any) => gasto.id !== id));
     } catch (error) {
       console.error("Erro ao excluir gasto:", error);

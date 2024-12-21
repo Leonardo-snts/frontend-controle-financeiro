@@ -1,6 +1,6 @@
 // src/components/AddPessoa.tsx
 import React, { useState } from "react";
-import axios from "axios";
+import { addPessoa } from "../services/api";
 
 const AddPessoa: React.FC = () => {
   const [nome, setNome] = useState("");
@@ -14,10 +14,7 @@ const AddPessoa: React.FC = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:8000/api/adicionar-pessoa/", {
-        nome,
-        email,
-      });
+      await addPessoa({ nome, email });
       setMessage("Pessoa adicionada com sucesso!");
       setNome("");
       setEmail("");
