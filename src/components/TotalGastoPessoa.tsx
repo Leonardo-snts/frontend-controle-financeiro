@@ -1,6 +1,6 @@
 // src/components/TotalGastosPorPessoa.tsx
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { fetchTotalGastos } from "../services/api";
 
 interface Pessoa {
   id: number;
@@ -15,11 +15,11 @@ const TotalGastosPessoa: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTotalGastos = async () => {
+    const fetchTotalGastosData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:8000/api/total-gastos/");
-        setPessoas(response.data);
+        const data = await fetchTotalGastos();
+        setPessoas(data);
       } catch (err) {
         console.error("Erro ao buscar dados de gastos:", err);
         setError("Não foi possível carregar os dados. Tente novamente.");
@@ -28,7 +28,7 @@ const TotalGastosPessoa: React.FC = () => {
       }
     };
 
-    fetchTotalGastos();
+    fetchTotalGastosData();
   }, []);
 
   if (loading) {

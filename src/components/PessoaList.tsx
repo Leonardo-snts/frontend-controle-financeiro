@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { fetchPessoas } from '../services/api';
 
 const PessoaList: React.FC = () => {
   const [pessoas, setPessoas] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:8000/api/pessoas/')
-      .then(response => setPessoas(response.data))
-      .catch(error => console.error('Erro ao buscar pessoas:', error));
-  }, []);
+      const fetchData = async () => {
+        try {
+          const data = await fetchPessoas();
+          setPessoas(data);
+        } catch (error) {
+          console.error('Erro ao buscar pessoas:', error);
+        }
+      };
+      fetchData();
+    }, []);
 
   return (
     <div className="p-4">
