@@ -57,6 +57,23 @@ export const deleteGasto = async (id: number) => {
   }
 };
 
+export const updatePessoa = async (id: number, data: any) => {
+  try {
+    const response = await api.put(`/pessoas/${id}/`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export const deletePessoa = async (id: number) => {
+  try {
+    await api.delete(`/pessoas/${id}/`);
+  } catch (error) {
+    throw error;
+  }
+}
+
 export const fetchTotalGastos = async () => {
   try {
     const response = await api.get('/total-gastos/');
