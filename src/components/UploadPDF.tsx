@@ -38,8 +38,11 @@ const UploadPDF: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-4 bg-white shadow-lg rounded">
-      <h2 className="text-xl font-bold text-center mb-4">Upload de Arquivos</h2>
+    <div className="bg-white shadow-lg rounded-lg p-6 hover:shadow-xl transition-shadow duration-300 flex place-content-center flex-col">
+      <h2 className="text-xl font-bold text-center mb-6 text-gray-800">
+        Upload de Arquivos
+      </h2>
+      <div className="space-y-4">
       <input
         type="file"
         accept=".xlsx"
@@ -53,6 +56,7 @@ const UploadPDF: React.FC = () => {
         Enviar PDF
       </button>
       {message && <p className="mt-4 text-center text-sm">{message}</p>}
+      </div>
     </div>
   );
 };

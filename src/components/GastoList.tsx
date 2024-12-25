@@ -10,6 +10,7 @@ const GastoList: React.FC = () => {
   const [updateParcela, setUpdateParcela] = useState(0);
   const [updatedData, setUpdatedData] = useState("");
   const [updatedPessoa, setUpdatedPessoa] = useState("");
+  const [dividedValues, setDividedValues] = useState< { [key: number]: number}>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,6 +26,20 @@ const GastoList: React.FC = () => {
 
     fetchData();
   }, []);
+
+  const handleDivideGasto = (gasto: any) => {
+    const numPessoas = pessoas.length;
+    if (numPessoas === 0) {
+      alert("Não há pessoas cadastradas para dividir o gasto.");
+      return;
+    }
+
+    const valorPorPessoa = gasto.valor / numPessoas;
+    setDividedValues ({
+      ...dividedValues,
+      [gasto.id]: valorPorPessoa
+    });
+  };
 
   const handleEdit = (gasto: any) => {
     setEditingGasto(gasto);
@@ -127,6 +142,12 @@ const GastoList: React.FC = () => {
               <div>
                 <h3 className="font-semibold">{gasto.descricao}</h3>
                 <p className="text-sm text-gray-600">Valor: R$ {gasto.valor}</p>
+                {dividedValues[gasto.id] && (
+                  <p className="text-sm text-green-600">
+                    Valor por Pessoa: R$ {dividedValues[gasto.id.toFixed(2)]}
+                    {` (dividido entre ${pessoas.length} pessoas)`}
+                  </p>
+                )}
                 <p className="text-sm text-gray-600">
                   Parcela: {gasto.parcela || "N/A"}
                 </p>
@@ -146,6 +167,12 @@ const GastoList: React.FC = () => {
                     className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
                   >
                     Excluir
+                  </button>
+                  <button
+                    onClick={() => handleDivideGasto(gasto)}
+                    className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+                  >
+                    Dividir Gasto
                   </button>
                 </div>
               </div>
