@@ -41,6 +41,8 @@ export const fetchGastos = async () => {
 };
 
 export const updateGasto = async (id: number, data: any) => {
+  console.log(id);
+  console.log(data);
   try {
     const response = await api.put(`/gastos/${id}/`, data);
     return response.data;
@@ -53,6 +55,18 @@ export const deleteGasto = async (id: number) => {
   try {
     await api.delete(`/gastos/${id}/`);
   } catch (error) {
+    throw error;
+  }
+};
+
+export const dividirGasto = async (id: number, pessoasIds: number[]) => {
+  try {
+    const response = await api.post(`/gastos/${id}/dividir_gasto/`, {
+      pessoas_ids: pessoasIds
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao dividir gasto:', error);
     throw error;
   }
 };

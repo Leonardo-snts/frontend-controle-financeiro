@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { fetchGastos, fetchPessoas, updateGasto, deleteGasto } from "../services/api";
 
 const GastoList: React.FC = () => {
-  const [gastos, setGastos] = useState([]);
+  const [gastos, setGastos] = useState<any[]>([]);
   const [pessoas, setPessoas] = useState([]);
   const [editingGasto, setEditingGasto] = useState<any | null>(null);
   const [updatedDescricao, setUpdatedDescricao] = useState("");
@@ -10,8 +10,11 @@ const GastoList: React.FC = () => {
   const [updateParcela, setUpdateParcela] = useState(0);
   const [updatedData, setUpdatedData] = useState("");
   const [updatedPessoa, setUpdatedPessoa] = useState("");
-  const [dividedValues, setDividedValues] = useState< { [key: number]: number}>({});
-
+  const [dividedValues, setDividedValues] = useState<{ [key: number]: number }>({});
+  const [selectedPeople, setSelectedPeople] = useState<number[]>([]);
+  const [showDivideModal, setShowDivideModal] = useState(false);
+  const [currentDividingGasto, setCurrentDividingGasto] = useState<any>(null); 
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -27,18 +30,109 @@ const GastoList: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleDivideGasto = (gasto: any) => {
-    const numPessoas = pessoas.length;
-    if (numPessoas === 0) {
-      alert("Não há pessoas cadastradas para dividir o gasto.");
+  const handleOpenDivideModal = (gasto: any) => {
+    setCurrentDividingGasto(gasto);
+    setSelectedPeople([]);
+    setShowDivideModal(true);
+  };
+
+  const togglePersonSelection = (pessoaId: number) => {
+    setSelectedPeople(prev => 
+      prev.includes(pessoaId) 
+        ? prev.filter(id => id !== pessoaId)
+        : [...prev, pessoaId]
+    );
+  };
+
+  const handleDivideGasto = async () => {
+    if (!currentDividingGasto || selectedPeople.length === 0) {
+      alert("Selecione pelo menos uma pessoa para dividir o gasto.");
       return;
     }
 
-    const valorPorPessoa = gasto.valor / numPessoas;
-    setDividedValues ({
-      ...dividedValues,
-      [gasto.id]: valorPorPessoa
-    });
+    const valorPorPessoa = Number((currentDividingGasto.valor / selectedPeople.length).toFixed(2));
+
+    try {
+      // Cria um array de promessas para atualizar o gasto para cada pessoa
+      const updatePromises = selectedPeople.map(pessoaId => {
+        return updateGasto(currentDividingGasto.id, {
+          descricao: `${currentDividingGasto.descricao} (Dividido)`,
+          valor: valorPorPessoa,
+          parcela: currentDividingGasto.parcela,
+          data: currentDividingGasto.data,
+          pessoa: pessoaId,
+          valor_original: currentDividingGasto.valor,
+          is_divided: true
+        });
+      });
+
+      await Promise.all(updatePromises);
+
+      // Atualiza a lista de gastos
+      const updateGastos = await fetchGastos();
+      setGastos(updateGastos);
+      
+      setShowDivideModal(false);
+      setCurrentDividingGasto(null);
+      alert(`Gasto dividido com sucesso! Valor por pessoa: R$ ${valorPorPessoa.toFixed(2)}`);
+    } catch (error) {
+      console.error("Erro ao dividir gasto:", error);
+      alert("Erro ao dividir o gasto. Por favor, tente novamente.");
+    }
+  };
+
+  // Componente Modal para divisão de gastos
+  const DivideModal = () => {
+    if (!showDivideModal || !currentDividingGasto) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full">
+          <h3 className="text-xl font-bold mb-4">Dividir Gasto</h3>
+          <p className="mb-2">Descrição: {currentDividingGasto.descricao}</p>
+          <p className="mb-4">Valor Total: R$ {currentDividingGasto.valor}</p>
+          
+          <div className="mb-4">
+            <h4 className="font-semibold mb-2">Selecione as pessoas:</h4>
+            <div className="max-h-48 overflow-y-auto">
+              {pessoas.map((pessoa: any) => (
+                <label key={pessoa.id} className="flex items-center space-x-2 p-2 hover:bg-gray-100">
+                  <input
+                    type="checkbox"
+                    checked={selectedPeople.includes(pessoa.id)}
+                    onChange={() => togglePersonSelection(pessoa.id)}
+                    className="rounded"
+                  />
+                  <span>{pessoa.nome}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {selectedPeople.length > 0 && (
+            <p className="text-green-600 mb-4">
+              Valor por pessoa: R$ {(currentDividingGasto.valor / selectedPeople.length).toFixed(2)}
+            </p>
+          )}
+
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={() => setShowDivideModal(false)}
+              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleDivideGasto}
+              className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+              disabled={selectedPeople.length === 0}
+            >
+              Confirmar Divisão
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const handleEdit = (gasto: any) => {
@@ -141,10 +235,12 @@ const GastoList: React.FC = () => {
             ) : (
               <div>
                 <h3 className="font-semibold">{gasto.descricao}</h3>
-                <p className="text-sm text-gray-600">Valor: R$ {gasto.valor}</p>
+                <p className="text-sm text-gray-600">
+                  Valor Atual: R$ {gasto.valor}
+                </p>
                 {dividedValues[gasto.id] && (
                   <p className="text-sm text-green-600">
-                    Valor por Pessoa: R$ {dividedValues[gasto.id.toFixed(2)]}
+                    Valor por Pessoa: R$ {dividedValues[gasto.id].toFixed(2)}
                     {` (dividido entre ${pessoas.length} pessoas)`}
                   </p>
                 )}
@@ -169,7 +265,7 @@ const GastoList: React.FC = () => {
                     Excluir
                   </button>
                   <button
-                    onClick={() => handleDivideGasto(gasto)}
+                    onClick={() => handleOpenDivideModal(gasto)}
                     className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
                   >
                     Dividir Gasto
@@ -180,6 +276,7 @@ const GastoList: React.FC = () => {
           </li>
         ))}
       </ul>
+      <DivideModal />
     </div>
   );
 };
