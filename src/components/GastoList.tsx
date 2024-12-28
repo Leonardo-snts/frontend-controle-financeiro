@@ -50,6 +50,15 @@ const GastoList: React.FC = () => {
       return;
     }
 
+    const valorTotal = currentDividingGasto.valor;
+    const pessoasCount = selectedPeople.length;
+    const valorBase = Math.floor((valorTotal * 100) / pessoasCount) / 100;
+    const resto = valorTotal - valorBase * pessoasCount;
+
+    const valoresPorPessoa = selectedPeople.map((_, index) => 
+      index < resto ? valorBase + 0.01 : valorBase
+    );
+
     const valorPorPessoa = Number((currentDividingGasto.valor / selectedPeople.length).toFixed(2));
 
     try {
