@@ -3,13 +3,13 @@ import { fetchGastos, fetchPessoas, updateGasto, deleteGasto } from "../services
 
 const GastoList: React.FC = () => {
   const [gastos, setGastos] = useState<any[]>([]);
-  const [pessoas, setPessoas] = useState([]);
+  const [pessoas, setPessoas] = useState<any[]>([]);
   const [editingGasto, setEditingGasto] = useState<any | null>(null);
   const [updatedDescricao, setUpdatedDescricao] = useState("");
   const [updatedValor, setUpdatedValor] = useState(0);
   const [updateParcela, setUpdateParcela] = useState(0);
   const [updatedData, setUpdatedData] = useState("");
-  const [updatedPessoa, setUpdatedPessoa] = useState("");
+  const [updatedPessoa, setUpdatedPessoa] = useState<number | null>(null);
   const [dividedValues, setDividedValues] = useState<{ [key: number]: number }>({});
   const [selectedPeople, setSelectedPeople] = useState<number[]>([]);
   const [showDivideModal, setShowDivideModal] = useState(false);
@@ -80,6 +80,11 @@ const GastoList: React.FC = () => {
       // Atualiza a lista de gastos
       const updateGastos = await fetchGastos();
       setGastos(updateGastos);
+
+      setDividedValues(prev => ({
+        ...prev,
+        [currentDividingGasto.id]: valorPorPessoa
+      }));
       
       setShowDivideModal(false);
       setCurrentDividingGasto(null);
@@ -88,6 +93,14 @@ const GastoList: React.FC = () => {
       console.error("Erro ao dividir gasto:", error);
       alert("Erro ao dividir o gasto. Por favor, tente novamente.");
     }
+  };
+
+  // Função para obter os nomes das pessoas a partir dos IDs
+  const getPessoaNomes = (pessoaIds: number[]) => {
+    return pessoaIds.map(id => {
+      const pessoa = pessoas.find(p => p.id === id);
+      return pessoa ? pessoa.nome : "N/A";
+    }).join(', ');
   };
 
   // Componente Modal para divisão de gastos
@@ -217,8 +230,8 @@ const GastoList: React.FC = () => {
                   className="p-2 border rounded w-full"
                 />
                 <select
-                  value={updatedPessoa}
-                  onChange={(e) => setUpdatedPessoa(e.target.value)}
+                  value={updatedPessoa || ""}
+                  onChange={(e) => setUpdatedPessoa(Number(e.target.value))}
                   className="p-2 border rounded w-full"
                 >
                   <option value="">Selecione uma pessoa</option>
@@ -258,7 +271,7 @@ const GastoList: React.FC = () => {
                 </p>
                 <p className="text-sm text-gray-600">Data: {gasto.data}</p>
                 <p className="text-sm text-gray-600">
-                  Pessoa: {gasto.pessoa || "N/A"}
+                  Pessoas: {gasto.pessoa && gasto.pessoa.length > 0 ? getPessoaNomes(gasto.pessoa) : "N/A"}
                 </p>
                 <div className="flex space-x-2 mt-2">
                   <button
