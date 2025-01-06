@@ -6,8 +6,8 @@ const AdicionarGasto: React.FC = () => {
   const [valor, setValor] = useState('');
   const [parcela, setParcela] = useState('');
   const [data, setData] = useState('');
-  const [pessoa, setPessoa] = useState('');
-  const [pessoas, setPessoas] = useState([]);
+  const [pessoasSelecionadas, setPessoasSelecionadas] = useState<number[]>([]);
+  const [pessoas, setPessoas] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,17 +24,30 @@ const AdicionarGasto: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addGasto({ descricao, valor, parcela, data, pessoa });
+      const gasto = {
+        descricao,
+        parcela,
+        valor: parseFloat(valor), // Converter para número
+        pessoa: pessoasSelecionadas,
+        data,
+      };
+  
+      await addGasto(gasto); // Envia o JSON para a API
       setDescricao('');
       setValor('');
       setParcela('');
       setData('');
-      setPessoa('');
+      setPessoasSelecionadas([]);
       alert('Gasto adicionado com sucesso!');
     } catch (error) {
       console.error('Erro ao adicionar gasto:', error);
       alert('Erro ao adicionar gasto.');
     }
+  };  
+
+  const handlePessoaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedOptions = Array.from(e.target.selectedOptions, option => Number(option.value));
+    setPessoasSelecionadas(selectedOptions);
   };
 
   return (
@@ -72,12 +85,12 @@ const AdicionarGasto: React.FC = () => {
           required
         />
         <select
-          value={pessoa}
-          onChange={(e) => setPessoa(e.target.value)}
+          multiple
+          value={pessoasSelecionadas.map(String)}
+          onChange={handlePessoaChange}
           className="block w-full p-2 border rounded"
           required
         >
-          <option value="">Selecione uma pessoa</option>
           {pessoas.map((pessoa: any) => (
             <option key={pessoa.id} value={pessoa.id}>
               {pessoa.nome}

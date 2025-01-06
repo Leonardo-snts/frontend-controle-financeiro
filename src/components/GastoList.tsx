@@ -10,7 +10,7 @@ const GastoList: React.FC = () => {
   const [updateParcela, setUpdateParcela] = useState(0);
   const [updatedData, setUpdatedData] = useState("");
   const [updatedPessoa, setUpdatedPessoa] = useState<number | null>(null);
-  const [dividedValues, setDividedValues] = useState<{ [key: number]: number }>({});
+  const [dividedValues, setDividedValues] = useState<{ [key: number]: number[] }>({});
   const [selectedPeople, setSelectedPeople] = useState<number[]>([]);
   const [showDivideModal, setShowDivideModal] = useState(false);
   const [currentDividingGasto, setCurrentDividingGasto] = useState<any>(null); 
@@ -45,55 +45,32 @@ const GastoList: React.FC = () => {
   };
 
   const handleDivideGasto = async () => {
-    if (!currentDividingGasto || selectedPeople.length === 0) {
-      alert("Selecione pelo menos uma pessoa para dividir o gasto.");
-      return;
-    }
-
-    const valorTotal = currentDividingGasto.valor;
-    const pessoasCount = selectedPeople.length;
-    const valorBase = Math.floor((valorTotal * 100) / pessoasCount) / 100;
-    const resto = valorTotal - valorBase * pessoasCount;
-
-    const valoresPorPessoa = selectedPeople.map((_, index) => 
-      index < resto ? valorBase + 0.01 : valorBase
-    );
-
-    const valorPorPessoa = Number((currentDividingGasto.valor / selectedPeople.length).toFixed(2));
-
     try {
-      // Cria um array de promessas para atualizar o gasto para cada pessoa
-      const updatePromises = selectedPeople.map(pessoaId => {
-        return updateGasto(currentDividingGasto.id, {
+      // Monta o payload e valida
+      const valorPorPessoa = currentDividingGasto.valor / selectedPeople.length;
+      const updatePromises = selectedPeople.map((pessoaId) => {
+        const gasto = {
           descricao: `${currentDividingGasto.descricao} (Dividido)`,
-          valor: valorPorPessoa,
+          valor: parseFloat(valorPorPessoa.toFixed(2)),
           parcela: currentDividingGasto.parcela,
           data: currentDividingGasto.data,
           pessoa: pessoaId,
-          valor_original: currentDividingGasto.valor,
-          is_divided: true
-        });
+          valor_original: parseFloat(currentDividingGasto.valor.toFixed(2)),
+          is_divided: true,
+        };
+        console.log("Payload enviado:", gasto); // Log do JSON
+        return updateGasto(currentDividingGasto.id, gasto);
       });
-
+  
       await Promise.all(updatePromises);
-
-      // Atualiza a lista de gastos
-      const updateGastos = await fetchGastos();
-      setGastos(updateGastos);
-
-      setDividedValues(prev => ({
-        ...prev,
-        [currentDividingGasto.id]: valorPorPessoa
-      }));
-      
-      setShowDivideModal(false);
-      setCurrentDividingGasto(null);
-      alert(`Gasto dividido com sucesso! Valor por pessoa: R$ ${valorPorPessoa.toFixed(2)}`);
+      alert("Gasto dividido com sucesso!");
     } catch (error) {
-      console.error("Erro ao dividir gasto:", error);
-      alert("Erro ao dividir o gasto. Por favor, tente novamente.");
+      // Captura e log detalhado do erro
+      const err = error as any;
+      console.error("Erro ao dividir gasto:", err.response?.data || err.message);
+      alert("Erro ao dividir o gasto. Verifique os dados e tente novamente.");
     }
-  };
+  };    
 
   // Função para obter os nomes das pessoas a partir dos IDs
   const getPessoaNomes = (pessoaIds: number[]) => {
@@ -262,7 +239,7 @@ const GastoList: React.FC = () => {
                 </p>
                 {dividedValues[gasto.id] && (
                   <p className="text-sm text-green-600">
-                    Valor por Pessoa: R$ {dividedValues[gasto.id].toFixed(2)}
+                    Valor por Pessoa: R$ {dividedValues[gasto.id].map(value => value.toFixed(2)).join(", ")}
                     {` (dividido entre ${pessoas.length} pessoas)`}
                   </p>
                 )}
