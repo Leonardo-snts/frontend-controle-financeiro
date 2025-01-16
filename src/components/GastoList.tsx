@@ -10,11 +10,10 @@ const GastoList: React.FC = () => {
   const [updateParcela, setUpdateParcela] = useState(0);
   const [updatedData, setUpdatedData] = useState("");
   const [updatedPessoa, setUpdatedPessoa] = useState<number | null>(null);
-  const [dividedValues, setDividedValues] = useState<{ [key: number]: number[] }>({});
   const [selectedPeople, setSelectedPeople] = useState<number[]>([]);
   const [showDivideModal, setShowDivideModal] = useState(false);
-  const [currentDividingGasto, setCurrentDividingGasto] = useState<any>(null); 
-  
+  const [currentDividingGasto, setCurrentDividingGasto] = useState<any>(null);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -31,14 +30,18 @@ const GastoList: React.FC = () => {
   }, []);
 
   const handleOpenDivideModal = (gasto: any) => {
+    if (gasto.is_divided) {
+      alert("Este gasto já foi dividido e não pode ser dividido novamente.");
+      return;
+    }
     setCurrentDividingGasto(gasto);
     setSelectedPeople([]);
     setShowDivideModal(true);
   };
 
   const togglePersonSelection = (pessoaId: number) => {
-    setSelectedPeople(prev => 
-      prev.includes(pessoaId) 
+    setSelectedPeople(prev =>
+      prev.includes(pessoaId)
         ? prev.filter(id => id !== pessoaId)
         : [...prev, pessoaId]
     );
@@ -46,33 +49,48 @@ const GastoList: React.FC = () => {
 
   const handleDivideGasto = async () => {
     try {
-      // Monta o payload e valida
-      const valorPorPessoa = currentDividingGasto.valor / selectedPeople.length;
+      if (!currentDividingGasto || selectedPeople.length === 0) {
+        alert("Selecione pelo menos uma pessoa para dividir o gasto.");
+        return;
+      }
+  
+      // Verificar novamente se o gasto já está dividido
+      if (currentDividingGasto.is_divided) {
+        alert("Este gasto já foi dividido anteriormente.");
+        setShowDivideModal(false);
+        return;
+      }
+  
+      const valorPorPessoa = parseFloat(
+        (currentDividingGasto.valor / selectedPeople.length).toFixed(2)
+      );
+  
       const updatePromises = selectedPeople.map((pessoaId) => {
-        const gasto = {
+        return updateGasto(currentDividingGasto.id, {
           descricao: `${currentDividingGasto.descricao} (Dividido)`,
-          valor: parseFloat(valorPorPessoa.toFixed(2)),
+          valor: valorPorPessoa,
           parcela: currentDividingGasto.parcela,
           data: currentDividingGasto.data,
-          pessoa: pessoaId,
-          valor_original: parseFloat(currentDividingGasto.valor.toFixed(2)),
+          pessoa: [pessoaId],
+          valor_original: currentDividingGasto.valor,
           is_divided: true,
-        };
-        console.log("Payload enviado:", gasto); // Log do JSON
-        return updateGasto(currentDividingGasto.id, gasto);
+        });
       });
   
       await Promise.all(updatePromises);
+  
+      // Atualizar o gasto atual para is_divided: true
+      const updatedGastos = await fetchGastos();
+      setGastos(updatedGastos);
+  
       alert("Gasto dividido com sucesso!");
+      setShowDivideModal(false);
     } catch (error) {
-      // Captura e log detalhado do erro
-      const err = error as any;
-      console.error("Erro ao dividir gasto:", err.response?.data || err.message);
+      console.error("Erro ao dividir gasto:", error);
       alert("Erro ao dividir o gasto. Verifique os dados e tente novamente.");
     }
-  };    
+  };  
 
-  // Função para obter os nomes das pessoas a partir dos IDs
   const getPessoaNomes = (pessoaIds: number[]) => {
     return pessoaIds.map(id => {
       const pessoa = pessoas.find(p => p.id === id);
@@ -80,7 +98,6 @@ const GastoList: React.FC = () => {
     }).join(', ');
   };
 
-  // Componente Modal para divisão de gastos
   const DivideModal = () => {
     if (!showDivideModal || !currentDividingGasto) return null;
 
@@ -90,7 +107,7 @@ const GastoList: React.FC = () => {
           <h3 className="text-xl font-bold mb-4">Dividir Gasto</h3>
           <p className="mb-2">Descrição: {currentDividingGasto.descricao}</p>
           <p className="mb-4">Valor Total: R$ {currentDividingGasto.valor}</p>
-          
+
           <div className="mb-4">
             <h4 className="font-semibold mb-2">Selecione as pessoas:</h4>
             <div className="max-h-48 overflow-y-auto">
@@ -153,10 +170,10 @@ const GastoList: React.FC = () => {
         parcela: updateParcela,
         data: updatedData,
         pessoa: updatedPessoa
-      })
+      });
       setEditingGasto(null);
-      const updateGastos = await fetchGastos();
-      setGastos(updateGastos);
+      const updatedGastos = await fetchGastos();
+      setGastos(updatedGastos);
     } catch (error) {
       console.error("Erro ao atualizar gasto:", error);
     }
@@ -182,30 +199,35 @@ const GastoList: React.FC = () => {
           >
             {editingGasto && editingGasto.id === gasto.id ? (
               <div className="space-y-2">
+                <h3 className="text-lg font-semibold">Editar Descrição:</h3>
                 <input
                   type="text"
                   value={updatedDescricao}
                   onChange={(e) => setUpdatedDescricao(e.target.value)}
                   className="p-2 border rounded w-full"
                 />
+                <h3 className="text-lg font-semibold">Editar Valor:</h3>
                 <input
                   type="number"
                   value={updatedValor}
                   onChange={(e) => setUpdatedValor(Number(e.target.value))}
                   className="p-2 border rounded w-full"
                 />
+                <h3 className="text-lg font-semibold">Editar Parcela:</h3>
                 <input
                   type="number"
                   value={updateParcela}
                   onChange={(e) => setUpdateParcela(Number(e.target.value))}
                   className="p-2 border rounded w-full"
                 />
+                <h3 className="text-lg font-semibold">Editar Data:</h3>
                 <input
                   type="date"
                   value={updatedData}
                   onChange={(e) => setUpdatedData(e.target.value)}
                   className="p-2 border rounded w-full"
                 />
+                <h3 className="text-lg font-semibold">Editar Pessoa:</h3>
                 <select
                   value={updatedPessoa || ""}
                   onChange={(e) => setUpdatedPessoa(Number(e.target.value))}
@@ -237,12 +259,6 @@ const GastoList: React.FC = () => {
                 <p className="text-sm text-gray-600">
                   Valor Atual: R$ {gasto.valor}
                 </p>
-                {dividedValues[gasto.id] && (
-                  <p className="text-sm text-green-600">
-                    Valor por Pessoa: R$ {dividedValues[gasto.id].map(value => value.toFixed(2)).join(", ")}
-                    {` (dividido entre ${pessoas.length} pessoas)`}
-                  </p>
-                )}
                 <p className="text-sm text-gray-600">
                   Parcela: {gasto.parcela || "N/A"}
                 </p>
@@ -265,9 +281,13 @@ const GastoList: React.FC = () => {
                   </button>
                   <button
                     onClick={() => handleOpenDivideModal(gasto)}
-                    className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+                    className={`px-4 py-2 rounded ${gasto.is_divided
+                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                        : "bg-purple-500 text-white hover:bg-purple-600"
+                      }`}
+                    disabled={gasto.is_divided}
                   >
-                    Dividir Gasto
+                    {gasto.is_divided ? 'Gasto já dividido' : 'Dividir Gasto'}
                   </button>
                 </div>
               </div>

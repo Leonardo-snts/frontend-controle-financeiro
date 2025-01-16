@@ -41,12 +41,12 @@ export const fetchGastos = async () => {
 };
 
 export const updateGasto = async (id: number, data: any) => {
-  console.log(id);
-  console.log(data);
+  console.log("Atualizando gasto:", { id, data }); // Log para verificar os valores
   try {
     const response = await api.put(`/gastos/${id}/`, data);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Erro ao atualizar gasto:", error.response || error.message);
     throw error;
   }
 };

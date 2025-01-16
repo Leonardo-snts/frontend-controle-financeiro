@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { fetchPessoas, addGasto } from '../services/api';
 
+interface Pessoa {
+  id: number;
+  nome: string;
+}
+
 const AdicionarGasto: React.FC = () => {
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
   const [parcela, setParcela] = useState('');
   const [data, setData] = useState('');
   const [pessoasSelecionadas, setPessoasSelecionadas] = useState<number[]>([]);
-  const [pessoas, setPessoas] = useState<any[]>([]);
+  const [pessoas, setPessoas] = useState<Pessoa[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,15 +29,16 @@ const AdicionarGasto: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const valorDividido = pessoasSelecionadas.length > 0 ? parseFloat(valor) / pessoasSelecionadas.length : parseFloat(valor);
       const gasto = {
         descricao,
         parcela,
-        valor: parseFloat(valor), // Converter para número
+        valor: valorDividido, 
         pessoa: pessoasSelecionadas,
         data,
       };
   
-      await addGasto(gasto); // Envia o JSON para a API
+      await addGasto(gasto); 
       setDescricao('');
       setValor('');
       setParcela('');
@@ -45,9 +51,12 @@ const AdicionarGasto: React.FC = () => {
     }
   };  
 
-  const handlePessoaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedOptions = Array.from(e.target.selectedOptions, option => Number(option.value));
-    setPessoasSelecionadas(selectedOptions);
+  const handleCheckboxChange = (id: number) => {
+    if (pessoasSelecionadas.includes(id)) {
+      setPessoasSelecionadas(pessoasSelecionadas.filter((pessoaId) => pessoaId !== id));
+    } else {
+      setPessoasSelecionadas([...pessoasSelecionadas, id]);
+    }
   };
 
   return (
@@ -84,19 +93,20 @@ const AdicionarGasto: React.FC = () => {
           className="block w-full p-2 border rounded"
           required
         />
-        <select
-          multiple
-          value={pessoasSelecionadas.map(String)}
-          onChange={handlePessoaChange}
-          className="block w-full p-2 border rounded"
-          required
-        >
-          {pessoas.map((pessoa: any) => (
-            <option key={pessoa.id} value={pessoa.id}>
+        <div className="block w-full p-2 boreder rounded">
+          {pessoas.map((pessoa) => (
+            <label key={pessoa.id} className="block">
+              <input 
+                type="checkbox"
+                value={pessoa.id}
+                checked={pessoasSelecionadas.includes(pessoa.id)}
+                onChange={() => handleCheckboxChange(pessoa.id)}
+                className="mr-2" 
+              />
               {pessoa.nome}
-            </option>
+            </label>
           ))}
-        </select>
+        </div>
         <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
           Adicionar
         </button>
@@ -106,3 +116,7 @@ const AdicionarGasto: React.FC = () => {
 };
 
 export default AdicionarGasto;
+
+// 1433
+// 1333
+// 200
