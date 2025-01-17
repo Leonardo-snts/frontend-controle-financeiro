@@ -18,11 +18,11 @@ const UploadPDF: React.FC = () => {
     }
 
     const formData = new FormData();
-    formData.append("pdf", file);
+    formData.append("file", file);
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/gastos/upload_pdf/",
+        "http://127.0.0.1:8000/api/process-file/",
         formData,
         {
           headers: {
@@ -38,11 +38,14 @@ const UploadPDF: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-4 bg-white shadow-lg rounded">
-      <h2 className="text-xl font-bold text-center mb-4">Upload de PDF</h2>
+    <div className="bg-white shadow-lg rounded-lg p-6 hover:shadow-xl transition-shadow duration-300 flex place-content-center flex-col">
+      <h2 className="text-xl font-bold text-center mb-6 text-gray-800">
+        Upload de Arquivos
+      </h2>
+      <div className="space-y-4">
       <input
         type="file"
-        accept=".pdf"
+        accept=".xlsx"
         onChange={handleFileChange}
         className="mb-4 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-indigo-100 file:text-indigo-600 hover:file:bg-indigo-200"
       />
@@ -53,6 +56,7 @@ const UploadPDF: React.FC = () => {
         Enviar PDF
       </button>
       {message && <p className="mt-4 text-center text-sm">{message}</p>}
+      </div>
     </div>
   );
 };
