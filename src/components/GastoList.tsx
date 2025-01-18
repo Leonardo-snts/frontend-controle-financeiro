@@ -7,9 +7,8 @@ const GastoList: React.FC = () => {
   const [editingGasto, setEditingGasto] = useState<any | null>(null);
   const [updatedDescricao, setUpdatedDescricao] = useState("");
   const [updatedValor, setUpdatedValor] = useState(0);
-  const [updateParcela, setUpdateParcela] = useState(0);
+  const [updateParcela, setUpdateParcela] = useState("");
   const [updatedData, setUpdatedData] = useState("");
-  const [updatedPessoa, setUpdatedPessoa] = useState<number | null>(null);
   const [selectedPeople, setSelectedPeople] = useState<number[]>([]);
   const [showDivideModal, setShowDivideModal] = useState(false);
   const [currentDividingGasto, setCurrentDividingGasto] = useState<any>(null);
@@ -47,24 +46,32 @@ const GastoList: React.FC = () => {
     );
   };
 
+  const togglePersonSelectionUnique = (pessoaId: number) => {
+    if (selectedPeople.includes(pessoaId)) {
+      setSelectedPeople([]);
+    } else {
+      setSelectedPeople([pessoaId]);
+    }
+  };
+  
+
   const handleDivideGasto = async () => {
     try {
       if (!currentDividingGasto || selectedPeople.length === 0) {
         alert("Selecione pelo menos uma pessoa para dividir o gasto.");
         return;
       }
-  
-      // Verificar novamente se o gasto já está dividido
+
       if (currentDividingGasto.is_divided) {
         alert("Este gasto já foi dividido anteriormente.");
         setShowDivideModal(false);
         return;
       }
-  
+
       const valorPorPessoa = parseFloat(
         (currentDividingGasto.valor / selectedPeople.length).toFixed(2)
       );
-  
+
       const updatePromises = selectedPeople.map((pessoaId) => {
         return updateGasto(currentDividingGasto.id, {
           descricao: `${currentDividingGasto.descricao} (Dividido)`,
@@ -76,20 +83,19 @@ const GastoList: React.FC = () => {
           is_divided: true,
         });
       });
-  
+
       await Promise.all(updatePromises);
-  
-      // Atualizar o gasto atual para is_divided: true
+
       const updatedGastos = await fetchGastos();
       setGastos(updatedGastos);
-  
+
       alert("Gasto dividido com sucesso!");
       setShowDivideModal(false);
     } catch (error) {
       console.error("Erro ao dividir gasto:", error);
       alert("Erro ao dividir o gasto. Verifique os dados e tente novamente.");
     }
-  };  
+  };
 
   const getPessoaNomes = (pessoaIds: number[]) => {
     return pessoaIds.map(id => {
@@ -157,7 +163,7 @@ const GastoList: React.FC = () => {
     setUpdatedValor(gasto.valor);
     setUpdateParcela(gasto.parcela);
     setUpdatedData(gasto.data);
-    setUpdatedPessoa(gasto.pessoa);
+    setSelectedPeople(gasto.pessoa || []);
   };
 
   const handleUpdate = async () => {
@@ -169,7 +175,7 @@ const GastoList: React.FC = () => {
         valor: updatedValor,
         parcela: updateParcela,
         data: updatedData,
-        pessoa: updatedPessoa
+        pessoa: selectedPeople
       });
       setEditingGasto(null);
       const updatedGastos = await fetchGastos();
@@ -215,9 +221,9 @@ const GastoList: React.FC = () => {
                 />
                 <h3 className="text-lg font-semibold">Editar Parcela:</h3>
                 <input
-                  type="number"
+                  type="text"
                   value={updateParcela}
-                  onChange={(e) => setUpdateParcela(Number(e.target.value))}
+                  onChange={(e) => setUpdateParcela(e.target.value)}
                   className="p-2 border rounded w-full"
                 />
                 <h3 className="text-lg font-semibold">Editar Data:</h3>
@@ -227,19 +233,22 @@ const GastoList: React.FC = () => {
                   onChange={(e) => setUpdatedData(e.target.value)}
                   className="p-2 border rounded w-full"
                 />
-                <h3 className="text-lg font-semibold">Editar Pessoa:</h3>
-                <select
-                  value={updatedPessoa || ""}
-                  onChange={(e) => setUpdatedPessoa(Number(e.target.value))}
-                  className="p-2 border rounded w-full"
-                >
-                  <option value="">Selecione uma pessoa</option>
-                  {pessoas.map((pessoa: any) => (
-                    <option key={pessoa.id} value={pessoa.id}>
+                <h3 className="text-lg font-semibold">Editar Pessoas:</h3>
+                <div className="block w-full p-2 border rounded">
+                  {pessoas.map((pessoa) => (
+                    <label key={pessoa.id} className="block">
+                      <input
+                        type="radio"
+
+                        value={pessoa.id}
+                        checked={selectedPeople.includes(pessoa.id)}
+                        onChange={() => togglePersonSelectionUnique(pessoa.id)}
+                        className="mr-2"
+                      />
                       {pessoa.nome}
-                    </option>
+                    </label>
                   ))}
-                </select>
+                </div>
                 <button
                   onClick={handleUpdate}
                   className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
@@ -282,8 +291,8 @@ const GastoList: React.FC = () => {
                   <button
                     onClick={() => handleOpenDivideModal(gasto)}
                     className={`px-4 py-2 rounded ${gasto.is_divided
-                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                        : "bg-purple-500 text-white hover:bg-purple-600"
+                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                      : "bg-purple-500 text-white hover:bg-purple-600"
                       }`}
                     disabled={gasto.is_divided}
                   >

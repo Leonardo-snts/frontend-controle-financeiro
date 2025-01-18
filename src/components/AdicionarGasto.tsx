@@ -116,7 +116,3 @@ const AdicionarGasto: React.FC = () => {
 };
 
 export default AdicionarGasto;
-
-// 1433
-// 1333
-// 200
